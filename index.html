@@ -17,7 +17,33 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 .wide{grid-column:span 2}.chartWrap{display:grid;grid-template-columns:32px 1fr;gap:8px;margin-top:12px}.yaxis{height:180px;position:relative;color:#888;font-size:11px}.ytick{position:absolute;right:0;transform:translateY(50%)}.chart{height:180px;display:flex;align-items:end;gap:4px;border-bottom:1px solid #bbb;padding-top:15px;position:relative;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#e8e8e5 25%)}
 .bar{flex:1;min-width:5px;background:#222;border-radius:3px 3px 0 0;position:relative}.bar:hover:after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;color:#fff;font-size:11px;padding:4px 6px;border-radius:4px}
 .empty{color:#888;padding:50px 0;text-align:center}
-@media(max-width:720px){header{display:block}.file{margin-top:16px}.grid{grid-template-columns:repeat(2,1fr)}.wide{grid-column:span 2}.value{font-size:27px}}
+@media(max-width:720px){
+ main{padding:20px 14px 36px}
+ header{display:block;margin-bottom:18px}
+ h1{font-size:28px}.sub{font-size:14px}
+ .file{margin-top:14px;padding:10px}
+ .source{display:grid;grid-template-columns:1fr auto;gap:8px}
+ .source input{width:100%;min-width:0;font-size:16px}
+ .source button{white-space:nowrap;min-height:44px;font-size:14px}
+ .source small{grid-column:1/-1;line-height:1.45}
+ .status{margin:14px 0;padding:15px 16px}.status strong{font-size:20px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .card{padding:14px 12px;border-radius:12px;min-width:0}
+ .label{font-size:12px}.value{font-size:27px;white-space:nowrap}.unit{font-size:11px}
+ .wide{grid-column:span 2}
+ .chartWrap{grid-template-columns:25px minmax(0,1fr);gap:6px;overflow:hidden}
+ .chart,.yaxis{height:150px}
+ .chart{gap:2px;overflow:hidden}.bar{min-width:2px}
+ #meta{font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+ .empty{padding:36px 0;font-size:14px}
+}
+@media(max-width:390px){
+ main{padding-left:10px;padding-right:10px}
+ .card{padding:12px 10px}
+ .value{font-size:24px}
+ .source{grid-template-columns:1fr}
+ .source button,.source small{grid-column:1}
+}
 </style>
 </head>
 <body><main>
