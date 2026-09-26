@@ -14,7 +14,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 .status strong{font-size:22px}.status small{display:block;color:#777;margin-top:5px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px}
 .label{font-size:13px;color:#777}.value{font-size:32px;font-weight:700;margin-top:6px}.unit{font-size:13px;font-weight:400;color:#777}
-.wide{grid-column:span 2}.chart{margin-top:12px;height:180px;display:flex;align-items:end;gap:4px;border-bottom:1px solid #ddd;padding-top:15px}
+.wide{grid-column:span 2}.chartWrap{display:grid;grid-template-columns:32px 1fr;gap:8px;margin-top:12px}.yaxis{height:180px;position:relative;color:#888;font-size:11px}.ytick{position:absolute;right:0;transform:translateY(50%)}.chart{height:180px;display:flex;align-items:end;gap:4px;border-bottom:1px solid #bbb;padding-top:15px;position:relative;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#e8e8e5 25%)}
 .bar{flex:1;min-width:5px;background:#222;border-radius:3px 3px 0 0;position:relative}.bar:hover:after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#111;color:#fff;font-size:11px;padding:4px 6px;border-radius:4px}
 .empty{color:#888;padding:50px 0;text-align:center}
 @media(max-width:720px){header{display:block}.file{margin-top:16px}.grid{grid-template-columns:repeat(2,1fr)}.wide{grid-column:span 2}.value{font-size:27px}}
@@ -33,7 +33,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <div class="card"><div class="label">30分ペース（1時間換算）</div><div class="value"><span id="pace">—</span><span class="unit"> 組/時</span></div></div>
 <div class="card"><div class="label">平均撮影間隔</div><div class="value"><span id="interval">—</span><span class="unit"> 秒</span></div></div>
 <div class="card wide"><div class="label">撮影時間</div><div class="value" style="font-size:22px"><span id="first">—</span> → <span id="last">—</span></div></div>
-<div class="card wide"><div class="label">5分ごとの撮影数</div><div id="chart" class="chart"></div></div>
+<div class="card wide"><div class="label">5分ごとの撮影数（組）</div><div class="chartWrap"><div id="yaxis" class="yaxis"></div><div id="chart" class="chart"></div></div></div>
 <div class="card wide"><div class="label">解析対象</div><div id="meta" style="margin-top:10px;line-height:1.7"></div></div>
 </div></section>
 </main>
@@ -79,7 +79,9 @@ function render(shots,file){
  const start=new Date(first.dt);start.setMinutes(Math.floor(start.getMinutes()/5)*5,0,0);
  const end=new Date(last.dt);end.setMinutes(Math.floor(end.getMinutes()/5)*5,0,0);
  const vals=[];for(let t=start.getTime();t<=end.getTime();t+=300000)vals.push([t,buckets.get(t)||0]);
- const max=Math.max(...vals.map(x=>x[1]),1),chart=$("chart");chart.innerHTML="";
+ const rawMax=Math.max(...vals.map(x=>x[1]),1);
+ const step=Math.max(1,Math.ceil(rawMax/4)),max=step*4,chart=$("chart"),yaxis=$("yaxis");chart.innerHTML="";yaxis.innerHTML="";
+ for(let v=0;v<=max;v+=step){const tick=document.createElement("span");tick.className="ytick";tick.textContent=v;tick.style.bottom=(v/max*100)+"%";yaxis.appendChild(tick)}
  vals.forEach(([t,n])=>{const b=document.createElement("div");b.className="bar";b.style.height=Math.max(2,n/max*100)+"%";b.dataset.tip=new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+" "+n+"組";chart.appendChild(b)});
  $("empty").hidden=true;$("dash").hidden=false;
 }
