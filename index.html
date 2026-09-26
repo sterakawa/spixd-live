@@ -75,6 +75,7 @@ function parseEntryList(text,source){
  const latestDate=shots.at(-1).date;
  render(shots.filter(x=>x.date===latestDate),source);
  return true;
+}
 $("file").addEventListener("change",async e=>{const f=e.target.files[0];if(f)parseEntryList(await f.text(),f.name)});
 $("loadSpixd").addEventListener("click",async()=>{
  const g=$("groupId").value.trim();if(!g)return;
