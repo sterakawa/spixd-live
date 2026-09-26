@@ -45,23 +45,36 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 </main>
 <script>
 const $=id=>document.getElementById(id);
+function toShot(date,time,name){
+ if(!/^\d{2}\.\d{2}\.\d{2}$/.test(date)||!/^\d{2}:\d{2}:\d{2}$/.test(time)||/^TEST$/i.test(name))return null;
+ const [yy,mo,da]=date.split(".").map(Number),[h,mi,s]=time.split(":").map(Number);
+ return {date,time,name,dt:new Date(2000+yy,mo-1,da,h,mi,s)};
+}
 function parseEntryList(text,source){
- const doc=new DOMParser().parseFromString(text,"text/html"),shots=[];
- for(const tr of doc.querySelectorAll("tr")){
-  const td=[...tr.querySelectorAll("td")];
-  if(td.length<5)continue;
-  const date=td[1]?.textContent.trim(),time=td[2]?.textContent.trim(),name=td[4]?.textContent.trim();
-  if(!/^\d{2}\.\d{2}\.\d{2}$/.test(date)||!/^\d{2}:\d{2}:\d{2}$/.test(time))continue;
-  if(/^TEST$/i.test(name))continue;
-  const [yy,mo,da]=date.split(".").map(Number),[h,mi,s]=time.split(":").map(Number);
-  shots.push({date,time,name,dt:new Date(2000+yy,mo-1,da,h,mi,s)});
+ const shots=[];
+ // SPIXDのAI用エンドポイントはXML。保存HTMLの読み込みにも引き続き対応する。
+ const xml=new DOMParser().parseFromString(text,"application/xml");
+ const xmlEntries=[...xml.querySelectorAll("entry_data")];
+ if(xmlEntries.length){
+  for(const entry of xmlEntries){
+   const date=entry.querySelector("date")?.textContent.trim()||"";
+   const time=entry.querySelector("time")?.textContent.trim()||"";
+   const name=entry.querySelector("name")?.textContent.trim()||"";
+   const shot=toShot(date,time,name);if(shot)shots.push(shot);
+  }
+ }else{
+  const doc=new DOMParser().parseFromString(text,"text/html");
+  for(const tr of doc.querySelectorAll("tr")){
+   const td=[...tr.querySelectorAll("td")];if(td.length<5)continue;
+   const shot=toShot(td[1]?.textContent.trim()||"",td[2]?.textContent.trim()||"",td[4]?.textContent.trim()||"");
+   if(shot)shots.push(shot);
+  }
  }
  shots.sort((a,b)=>a.dt-b.dt);
  if(!shots.length){alert("撮影ログを見つけられませんでした。");return false}
  const latestDate=shots.at(-1).date;
  render(shots.filter(x=>x.date===latestDate),source);
  return true;
-}
 $("file").addEventListener("change",async e=>{const f=e.target.files[0];if(f)parseEntryList(await f.text(),f.name)});
 $("loadSpixd").addEventListener("click",async()=>{
  const g=$("groupId").value.trim();if(!g)return;
