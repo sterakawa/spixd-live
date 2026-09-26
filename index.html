@@ -82,7 +82,7 @@ function render(shots,file){
  const rawMax=Math.max(...vals.map(x=>x[1]),1);
  const step=Math.max(1,Math.ceil(rawMax/4)),max=step*4,chart=$("chart"),yaxis=$("yaxis");chart.innerHTML="";yaxis.innerHTML="";
  for(let v=0;v<=max;v+=step){const tick=document.createElement("span");tick.className="ytick";tick.textContent=v;tick.style.bottom=(v/max*100)+"%";yaxis.appendChild(tick)}
- vals.forEach(([t,n])=>{const b=document.createElement("div");b.className="bar";b.style.height=Math.max(2,n/max*100)+"%";b.dataset.tip=new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+" "+n+"組";chart.appendChild(b)});
+ vals.forEach(([t,n])=>{const b=document.createElement("div");b.className="bar";b.style.height=Math.max(2,n/max*100)+"%";b.dataset.tip=new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+" "+n+"組 / 時速換算 "+(n*12)+"組";chart.appendChild(b)});
  $("empty").hidden=true;$("dash").hidden=false;
 }
 </script></body></html>
