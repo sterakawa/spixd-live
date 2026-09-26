@@ -21,12 +21,12 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 </style>
 </head>
 <body><main>
-<header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div></div><label class="file">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html"></label></header>
+<header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div><div id="liveDate" style="font-size:14px;font-weight:700;margin-top:8px"></div></div><label class="file">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html"></label></header>
 <div id="empty" class="empty">保存した ENTRY LIST.html を選択してください。</div>
 <section id="dash" hidden>
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
 <div class="grid">
-<div class="card"><div class="label">累計撮影数</div><div class="value" id="total">—</div></div>
+<div class="card"><div class="label">本日の撮影数</div><div class="value" id="total">—</div></div>
 <div class="card"><div class="label">直近5分</div><div class="value"><span id="m5">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近10分</div><div class="value"><span id="m10">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近30分</div><div class="value"><span id="m30">—</span><span class="unit"> 組</span></div></div>
@@ -62,7 +62,7 @@ function render(shots,file){
  const first=shots[0],last=shots.at(-1),m5=countSince(shots,last.dt,5),m10=countSince(shots,last.dt,10),m30=countSince(shots,last.dt,30);
  const diffs=shots.slice(1).map((x,i)=>(x.dt-shots[i].dt)/1000).filter(x=>x>=0);
  const avg=diffs.length?Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length):0;
- $("total").textContent=shots.length;$("m5").textContent=m5;$("m10").textContent=m10;$("m30").textContent=m30;$("pace").textContent=m30*2;$("interval").textContent=avg;$("first").textContent=first.time;$("last").textContent=last.time;
+ $("liveDate").textContent=`${first.date} LIVE`;$("total").textContent=shots.length;$("m5").textContent=m5;$("m10").textContent=m10;$("m30").textContent=m30;$("pace").textContent=m30*2;$("interval").textContent=avg;$("first").textContent=first.time;$("last").textContent=last.time;
  const prev5=shots.filter(x=>x.dt>new Date(last.dt-10*60000)&&x.dt<=new Date(last.dt-5*60000)).length;
  let status="安定しています",detail="直近の撮影ログに大きな変化はありません。";
  if(m5===0){status="撮影が止まっています";detail="直近5分に新しい撮影記録がありません。";}
