@@ -54,7 +54,11 @@ $("file").addEventListener("change",async e=>{
   shots.push({date,time,name,dt:new Date(2000+yy,mo-1,da,h,mi,s)});
  }
  shots.sort((a,b)=>a.dt-b.dt);
- render(shots,f.name);
+ if(!shots.length){render([],f.name);return}
+ // ENTRY LISTには複数日の履歴が残るため、最も新しい日付だけをLIVE解析する
+ const latestDate=shots.at(-1).date;
+ const latestShots=shots.filter(x=>x.date===latestDate);
+ render(latestShots,f.name);
 });
 function countSince(shots,end,min){const start=end-min*60000;return shots.filter(x=>x.dt>start&&x.dt<=end).length}
 function render(shots,file){
