@@ -27,10 +27,14 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
 <div class="grid">
 <div class="card"><div class="label">本日の撮影数</div><div class="value" id="total">—</div></div>
+<div class="card"><div class="label">現在ペース</div><div class="value"><span id="currentPace">—</span><span class="unit"> 組/時</span></div></div>
+<div class="card"><div class="label">本日平均</div><div class="value"><span id="dayPace">—</span><span class="unit"> 組/時</span></div></div>
+<div class="card"><div class="label">本日ピーク</div><div class="value"><span id="peakPace">—</span><span class="unit"> 組/時</span></div></div>
 <div class="card"><div class="label">直近5分</div><div class="value"><span id="m5">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近10分</div><div class="value"><span id="m10">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近30分</div><div class="value"><span id="m30">—</span><span class="unit"> 組</span></div></div>
-<div class="card"><div class="label">30分ペース（1時間換算）</div><div class="value"><span id="pace">—</span><span class="unit"> 組/時</span></div></div>
+<div class="card"><div class="label">30分平均</div><div class="value"><span id="pace">—</span><span class="unit"> 組/時</span></div></div>
+<div class="card"><div class="label">高負荷継続</div><div class="value"><span id="highDuration">—</span><span class="unit"> 分</span></div></div>
 <div class="card"><div class="label">平均撮影間隔</div><div class="value"><span id="interval">—</span><span class="unit"> 秒</span></div></div>
 <div class="card wide"><div class="label">撮影時間</div><div class="value" style="font-size:22px"><span id="first">—</span> → <span id="last">—</span></div></div>
 <div class="card wide"><div class="label">5分ごとの撮影数（組）</div><div class="chartWrap"><div id="yaxis" class="yaxis"></div><div id="chart" class="chart"></div></div></div>
@@ -66,19 +70,30 @@ function render(shots,file){
  const first=shots[0],last=shots.at(-1),m5=countSince(shots,last.dt,5),m10=countSince(shots,last.dt,10),m30=countSince(shots,last.dt,30);
  const diffs=shots.slice(1).map((x,i)=>(x.dt-shots[i].dt)/1000).filter(x=>x>=0);
  const avg=diffs.length?Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length):0;
- $("liveDate").textContent=`${first.date} LIVE`;$("total").textContent=shots.length;$("m5").textContent=m5;$("m10").textContent=m10;$("m30").textContent=m30;$("pace").textContent=m30*2;$("interval").textContent=avg;$("first").textContent=first.time;$("last").textContent=last.time;
- const prev5=shots.filter(x=>x.dt>new Date(last.dt-10*60000)&&x.dt<=new Date(last.dt-5*60000)).length;
- let status="安定しています",detail="直近の撮影ログに大きな変化はありません。";
- if(m5===0){status="撮影が止まっています";detail="直近5分に新しい撮影記録がありません。";}
- else if(prev5>0&&m5>=prev5*1.5){status="撮影ペース上昇中";detail=`直近5分は ${m5}組。ひとつ前の5分間（${prev5}組）より増えています。`;}
- else if(prev5>=3&&m5<=prev5*.5){status="撮影ペースが落ち着いています";detail=`直近5分は ${m5}組。ひとつ前の5分間（${prev5}組）から減っています。`;}
- $("statusText").textContent=status;$("statusDetail").textContent=detail;
+ const elapsedHours=Math.max((last.dt-first.dt)/3600000,1/60);
+ const dayPace=Math.round(shots.length/elapsedHours);
+ $("liveDate").textContent=`${first.date} LIVE`;$("total").textContent=shots.length;$("m5").textContent=m5;$("m10").textContent=m10;$("m30").textContent=m30;$("pace").textContent=m30*2;$("currentPace").textContent=m5*12;$("dayPace").textContent=dayPace;$("interval").textContent=avg;$("first").textContent=first.time;$("last").textContent=last.time;
  $("meta").innerHTML=`${file}<br>${first.date} / ${shots.length}件（TESTを除外）<br>※「現在」は保存されたログの最終撮影時刻 ${last.time} として計算`;
  const buckets=new Map();
  for(const x of shots){const d=new Date(x.dt);d.setMinutes(Math.floor(d.getMinutes()/5)*5,0,0);const k=d.getTime();buckets.set(k,(buckets.get(k)||0)+1)}
  const start=new Date(first.dt);start.setMinutes(Math.floor(start.getMinutes()/5)*5,0,0);
  const end=new Date(last.dt);end.setMinutes(Math.floor(end.getMinutes()/5)*5,0,0);
  const vals=[];for(let t=start.getTime();t<=end.getTime();t+=300000)vals.push([t,buckets.get(t)||0]);
+ const bucketCounts=vals.map(x=>x[1]);
+ const peakCount=Math.max(...bucketCounts,0),peakPace=peakCount*12;
+ $("peakPace").textContent=peakPace;
+ // 暫定定義: 本日平均の1.25倍以上を「高負荷」とし、最新区間から連続した時間を表示
+ const highThreshold=dayPace*1.25;
+ let highBuckets=0;
+ for(let i=vals.length-1;i>=0;i--){if(vals[i][1]*12>=highThreshold&&vals[i][1]>0)highBuckets++;else break}
+ const highMinutes=highBuckets*5;$("highDuration").textContent=highMinutes;
+ const currentPace=m5*12,ratio=dayPace?currentPace/dayPace:0;
+ let status="通常",detail=`現在 ${currentPace}組/時。本日平均 ${dayPace}組/時です。`;
+ if(m5===0){status="撮影が止まっています";detail="直近5分に新しい撮影記録がありません。";}
+ else if(ratio>=1.5&&highMinutes<=10){status="突発ピーク";detail=`現在 ${currentPace}組/時。本日平均の約${ratio.toFixed(1)}倍のペースです。`;}
+ else if(highMinutes>=15){status="高負荷継続";detail=`平均を上回る高い撮影ペースが約${highMinutes}分続いています。現在 ${currentPace}組/時です。`;}
+ else if(ratio<=0.6){status="ペース低下";detail=`現在 ${currentPace}組/時。本日平均 ${dayPace}組/時を下回っています。`;}
+ $("statusText").textContent=status;$("statusDetail").textContent=detail;
  const rawMax=Math.max(...vals.map(x=>x[1]),1);
  const step=Math.max(1,Math.ceil(rawMax/4)),max=step*4,chart=$("chart"),yaxis=$("yaxis");chart.innerHTML="";yaxis.innerHTML="";
  for(let v=0;v<=max;v+=step){const tick=document.createElement("span");tick.className="ytick";tick.textContent=v;tick.style.bottom=(v/max*100)+"%";yaxis.appendChild(tick)}
