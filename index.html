@@ -23,7 +23,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
  h1{font-size:28px}.sub{font-size:14px}
  .controls{min-width:0;margin-top:14px}.file{margin-top:0;padding:10px}.manualLabel{display:none}
  .source{display:grid;grid-template-columns:1fr auto;gap:8px}
- .source input{width:100%;min-width:0;font-size:16px}.endTime{grid-column:1/-1}.endTime input{width:120px}
+ .source input{width:100%;min-width:0;font-size:16px}.endTime{grid-column:2;justify-self:end}.endTime input{width:120px}
  .source button{white-space:nowrap;min-height:44px;font-size:14px}
  .source small{grid-column:1/-1;line-height:1.45}.liveBadge{font-weight:700;color:#222}
  .status{margin:14px 0;padding:15px 16px}.status strong{font-size:20px}
@@ -42,14 +42,14 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
  .card{padding:12px 10px}
  .value{font-size:24px}
  .source{grid-template-columns:1fr}
- .source button,.source small{grid-column:1}
+ .source button,.source small{grid-column:1}.endTime{grid-column:1;justify-self:start}
 }
 </style>
 </head>
 <body><main>
 <header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div><div id="liveDate" style="font-size:14px;font-weight:700;margin-top:8px"></div></div>
 <div class="controls"><label class="file manualLabel">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html,.xml,text/xml"></label>
-<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><label class="endTime">終了 <input id="plannedEnd" type="time" value="20:00"></label><button id="loadSpixd" type="button">SPIXDから読み込む</button><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
+<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><label class="endTime">終了予定 <input id="plannedEnd" type="time" value="20:00"></label><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
 <div id="empty" class="empty">グループIDを確認して「SPIXDから読み込む」を押してください。</div>
 <section id="dash" hidden>
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
@@ -67,6 +67,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <div class="card"><div class="label">予定終了</div><div class="value" id="plannedEndView">—</div></div>
 <div class="card"><div class="label">終了時予測</div><div class="value"><span id="forecast">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">残り時間</div><div class="value" id="remaining">—</div></div>
+<div class="card"><div class="label">現在の撮影人数</div><div class="value"><span id="people">—</span><span class="unit"> 人</span></div></div>
 <div class="card wide"><div class="label">撮影時間</div><div class="value" style="font-size:22px"><span id="first">—</span> → <span id="last">—</span></div></div>
 <div class="card wide"><div class="label">5分ごとの撮影数（組）</div><div class="chartWrap"><div id="yaxis" class="yaxis"></div><div id="chart" class="chart"></div></div></div>
 <div class="card wide"><div class="label">解析対象</div><div id="meta" style="margin-top:10px;line-height:1.7"></div></div>
@@ -160,6 +161,8 @@ function render(shots,file){
  const avg=diffs.length?Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length):0;
  const elapsedHours=Math.max((last.dt-first.dt)/3600000,1/60);
  const dayPace=Math.round(shots.length/elapsedHours);
+ const people=shots.reduce((sum,x)=>{const n=Number.parseInt(x.name,10);return sum+(Number.isFinite(n)&&n>0?n:1)},0);
+ $("people").textContent=people;
  const planned=$("plannedEnd").value;
  let forecast="—",remaining="—";
  if(planned){
