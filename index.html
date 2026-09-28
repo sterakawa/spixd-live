@@ -103,8 +103,11 @@ function parseEntryList(text,source){
  return true;
 }
 $("file").addEventListener("change",async e=>{const f=e.target.files[0];if(f)parseEntryList(await f.text(),f.name)});
-$("loadSpixd").addEventListener("click",async()=>{
+let refreshTimer=null,countdownTimer=null,nextRefresh=0,isLoading=false;
+async function loadSpixd(){
+ if(isLoading)return;
  const g=$("groupId").value.trim();if(!g)return;
+ isLoading=true;
  const url="https://spixd.com/aipro/ai-entrylist.php?g="+encodeURIComponent(g);
  $("connection").textContent="SPIXDへ接続中…";
  try{
@@ -112,14 +115,34 @@ $("loadSpixd").addEventListener("click",async()=>{
   if(!r.ok)throw new Error("HTTP "+r.status);
   const text=await r.text();
   if(parseEntryList(text,"SPIXD / "+g)){
-   $("connection").innerHTML='<span class="liveBadge">● LIVE</span>　接続中 / 最終ログ '+shotsLastTime(text);
+   const now=new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+   $("connection").innerHTML='<span class="liveBadge">● LIVE</span>　最終更新 '+now+' / 次回更新まで 10秒';
   }else{
-   $("connection").textContent="取得はできましたが、ENTRY LISTとして解析できませんでした。認証画面が返っている可能性があります。";
+   $("connection").textContent="取得はできましたが、ENTRY LISTとして解析できませんでした。";
   }
  }catch(err){
-  $("connection").textContent="接続失敗："+err.message+"（CORSまたは認証制限の可能性があります）";
+  $("connection").textContent="更新失敗："+err.message+" / 10秒後に再試行します";
+ }finally{
+  isLoading=false;nextRefresh=Date.now()+10000;
  }
-});
+}
+function startAutoRefresh(){
+ clearInterval(refreshTimer);clearInterval(countdownTimer);
+ loadSpixd();
+ refreshTimer=setInterval(loadSpixd,10000);
+ countdownTimer=setInterval(()=>{
+  if(isLoading)return;
+  const s=Math.max(0,Math.ceil((nextRefresh-Date.now())/1000));
+  const el=$("connection");
+  if(el.querySelector(".liveBadge")){
+   const now=el.textContent.match(/最終更新\s+([0-9:]+)/)?.[1]||"";
+   el.innerHTML='<span class="liveBadge">● LIVE</span>　最終更新 '+now+' / 次回更新まで '+s+'秒';
+  }
+ },1000);
+}
+$("loadSpixd").textContent="今すぐ更新";
+$("loadSpixd").addEventListener("click",loadSpixd);
+startAutoRefresh();
 function shotsLastTime(text){
  const xml=new DOMParser().parseFromString(text,"application/xml");
  const first=xml.querySelector("entry_data time");
