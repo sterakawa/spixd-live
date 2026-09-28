@@ -9,7 +9,7 @@
 *{box-sizing:border-box} body{margin:0} main{max-width:1050px;margin:auto;padding:32px 20px 60px}
 header{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}
 h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
-.controls{min-width:430px}.file{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px}.manualLabel{display:block}.source{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.source input{padding:9px 10px;border:1px solid #ccc;border-radius:8px}.source button{padding:9px 12px;border:1px solid #222;border-radius:8px;background:#222;color:#fff;cursor:pointer}.source small{width:100%;color:#777}
+.controls{min-width:430px}.file{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px}.manualLabel{display:block}.source{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.source input{padding:9px 10px;border:1px solid #ccc;border-radius:8px}.endTime{display:flex;align-items:center;gap:5px;font-size:12px;color:#777}.endTime input{width:92px}.source button{padding:9px 12px;border:1px solid #222;border-radius:8px;background:#222;color:#fff;cursor:pointer}.source small{width:100%;color:#777}
 .status{margin:18px 0;padding:18px 20px;background:#fff;border-radius:14px;border:1px solid #ddd}
 .status strong{font-size:22px}.status small{display:block;color:#777;margin-top:5px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px}
@@ -23,7 +23,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
  h1{font-size:28px}.sub{font-size:14px}
  .controls{min-width:0;margin-top:14px}.file{margin-top:0;padding:10px}.manualLabel{display:none}
  .source{display:grid;grid-template-columns:1fr auto;gap:8px}
- .source input{width:100%;min-width:0;font-size:16px}
+ .source input{width:100%;min-width:0;font-size:16px}.endTime{grid-column:1/-1}.endTime input{width:120px}
  .source button{white-space:nowrap;min-height:44px;font-size:14px}
  .source small{grid-column:1/-1;line-height:1.45}.liveBadge{font-weight:700;color:#222}
  .status{margin:14px 0;padding:15px 16px}.status strong{font-size:20px}
@@ -49,7 +49,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <body><main>
 <header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div><div id="liveDate" style="font-size:14px;font-weight:700;margin-top:8px"></div></div>
 <div class="controls"><label class="file manualLabel">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html,.xml,text/xml"></label>
-<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
+<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><label class="endTime">終了 <input id="plannedEnd" type="time" value="20:00"></label><button id="loadSpixd" type="button">SPIXDから読み込む</button><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
 <div id="empty" class="empty">グループIDを確認して「SPIXDから読み込む」を押してください。</div>
 <section id="dash" hidden>
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
@@ -58,6 +58,9 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <div class="card"><div class="label">現在ペース</div><div class="value"><span id="currentPace">—</span><span class="unit"> 組/時</span></div></div>
 <div class="card"><div class="label">本日平均</div><div class="value"><span id="dayPace">—</span><span class="unit"> 組/時</span></div></div>
 <div class="card"><div class="label">本日ピーク</div><div class="value"><span id="peakPace">—</span><span class="unit"> 組/時</span></div></div>
+<div class="card"><div class="label">予定終了</div><div class="value" id="plannedEndView">—</div></div>
+<div class="card"><div class="label">終了時予測</div><div class="value"><span id="forecast">—</span><span class="unit"> 組</span></div></div>
+<div class="card"><div class="label">残り時間</div><div class="value" id="remaining">—</div></div>
 <div class="card"><div class="label">直近5分</div><div class="value"><span id="m5">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近10分</div><div class="value"><span id="m10">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">直近30分</div><div class="value"><span id="m30">—</span><span class="unit"> 組</span></div></div>
@@ -142,6 +145,7 @@ function startAutoRefresh(){
 }
 $("loadSpixd").textContent="今すぐ更新";
 $("loadSpixd").addEventListener("click",loadSpixd);
+$("plannedEnd").addEventListener("change",loadSpixd);
 startAutoRefresh();
 function shotsLastTime(text){
  const xml=new DOMParser().parseFromString(text,"application/xml");
@@ -156,6 +160,20 @@ function render(shots,file){
  const avg=diffs.length?Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length):0;
  const elapsedHours=Math.max((last.dt-first.dt)/3600000,1/60);
  const dayPace=Math.round(shots.length/elapsedHours);
+ const planned=$("plannedEnd").value;
+ let forecast="—",remaining="—";
+ if(planned){
+  const [eh,em]=planned.split(":").map(Number);
+  const endDt=new Date(last.dt);endDt.setHours(eh,em,0,0);
+  const remainMs=endDt-last.dt;
+  if(remainMs>0){
+   const remainHours=remainMs/3600000;
+   forecast=Math.round(shots.length+dayPace*remainHours);
+   const totalMin=Math.ceil(remainMs/60000);
+   remaining=(Math.floor(totalMin/60)?Math.floor(totalMin/60)+"時間":"")+(totalMin%60)+"分";
+  }else{forecast=shots.length;remaining="終了時刻経過";}
+ }
+ $("plannedEndView").textContent=planned||"—";$("forecast").textContent=forecast;$("remaining").textContent=remaining;
  $("liveDate").textContent=`${first.date} LIVE`;$("total").textContent=shots.length;$("m5").textContent=m5;$("m10").textContent=m10;$("m30").textContent=m30;$("pace").textContent=m30*2;$("currentPace").textContent=m5*12;$("dayPace").textContent=dayPace;$("interval").textContent=avg;$("first").textContent=first.time;$("last").textContent=last.time;
  $("meta").innerHTML=`${file}<br>${first.date} / ${shots.length}件（TESTを除外）<br>※「現在」は保存されたログの最終撮影時刻 ${last.time} として計算`;
  const buckets=new Map();
