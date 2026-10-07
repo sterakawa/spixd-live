@@ -114,7 +114,19 @@ function parseEntryList(text,source){
  shots.sort((a,b)=>a.dt-b.dt);
  if(!shots.length){alert("撮影ログを見つけられませんでした。");return false}
  const latestDate=shots.at(-1).date;
- render(shots.filter(x=>x.date===latestDate),source);
+ let dayShots=shots.filter(x=>x.date===latestDate);
+ const plannedStart=$("plannedStart").value;
+ if(plannedStart){
+  const [sh,sm]=plannedStart.split(":").map(Number);
+  const startBoundary=new Date(dayShots[0].dt);
+  startBoundary.setHours(sh,sm,0,0);
+  dayShots=dayShots.filter(x=>x.dt>=startBoundary);
+ }
+ if(!dayShots.length){
+  $("connection").textContent="開始予定時刻以降の撮影ログはまだありません。";
+  return false;
+ }
+ render(dayShots,source);
  return true;
 }
 $("file").addEventListener("change",async e=>{const f=e.target.files[0];if(f)parseEntryList(await f.text(),f.name)});
