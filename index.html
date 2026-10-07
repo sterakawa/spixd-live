@@ -76,6 +76,16 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 </main>
 <script>
 const $=id=>document.getElementById(id);
+const savedSettings={
+ groupId:localStorage.getItem("spixdLive.groupId"),
+ plannedStart:localStorage.getItem("spixdLive.plannedStart"),
+ plannedEnd:localStorage.getItem("spixdLive.plannedEnd")
+};
+for(const [id,value] of Object.entries(savedSettings)){if(value!==null)$(id).value=value}
+function saveSetting(id){localStorage.setItem("spixdLive."+id,$(id).value)}
+["groupId","plannedStart","plannedEnd"].forEach(id=>{
+ $(id).addEventListener("change",()=>saveSetting(id));
+});
 function toShot(date,time,name){
  if(!/^\d{2}\.\d{2}\.\d{2}$/.test(date)||!/^\d{2}:\d{2}:\d{2}$/.test(time)||/^TEST$/i.test(name))return null;
  const [yy,mo,da]=date.split(".").map(Number),[h,mi,s]=time.split(":").map(Number);
