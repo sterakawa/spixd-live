@@ -9,7 +9,7 @@
 *{box-sizing:border-box} body{margin:0} main{max-width:1050px;margin:auto;padding:32px 20px 60px}
 header{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}
 h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
-.controls{min-width:430px}.file{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px}.manualLabel{display:block}.source{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.source input{padding:9px 10px;border:1px solid #ccc;border-radius:8px}.endTime{display:flex;align-items:center;gap:8px;font-size:12px;color:#777}.endTime input{width:92px}.source button{padding:9px 12px;border:1px solid #222;border-radius:8px;background:#222;color:#fff;cursor:pointer}.source small{width:100%;color:#777}
+.controls{min-width:430px}.file{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px}.manualLabel{display:block}.source{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.source input{padding:9px 10px;border:1px solid #ccc;border-radius:8px}.scheduleTimes{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.endTime{display:flex;align-items:center;gap:8px;font-size:12px;color:#777}.endTime input{width:92px}.source button{padding:9px 12px;border:1px solid #222;border-radius:8px;background:#222;color:#fff;cursor:pointer}.source small{width:100%;color:#777}
 .status{margin:18px 0;padding:18px 20px;background:#fff;border-radius:14px;border:1px solid #ddd}
 .status strong{font-size:22px}.status small{display:block;color:#777;margin-top:5px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px}
@@ -23,7 +23,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
  h1{font-size:28px}.sub{font-size:14px}
  .controls{min-width:0;margin-top:14px}.file{margin-top:0;padding:10px}.manualLabel{display:none}
  .source{display:grid;grid-template-columns:1fr auto;gap:8px}
- .source input{width:100%;min-width:0;font-size:16px}.endTime{grid-column:1/-1;justify-self:start}.endTime input{width:120px}
+ .source input{width:100%;min-width:0;font-size:16px}.scheduleTimes{grid-column:1/-1;justify-self:start}.endTime input{width:120px}
  .source button{white-space:nowrap;min-height:44px;font-size:14px}
  .source small{grid-column:1/-1;line-height:1.45}.liveBadge{font-weight:700;color:#222}
  .status{margin:14px 0;padding:15px 16px}.status strong{font-size:20px}
@@ -42,14 +42,14 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
  .card{padding:12px 10px}
  .value{font-size:24px}
  .source{grid-template-columns:1fr}
- .source button,.source small{grid-column:1}.endTime{grid-column:1;justify-self:start}
+ .source button,.source small{grid-column:1}.scheduleTimes{grid-column:1;justify-self:start;gap:8px}
 }
 </style>
 </head>
 <body><main>
 <header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div><div id="liveDate" style="font-size:14px;font-weight:700;margin-top:8px"></div></div>
 <div class="controls"><label class="file manualLabel">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html,.xml,text/xml"></label>
-<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><label class="endTime"><input id="plannedEnd" type="time" value="20:00"><span>終了予定</span></label><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
+<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><div class="scheduleTimes"><label class="endTime"><input id="plannedStart" type="time" value="16:00"><span>開始予定</span></label><label class="endTime"><input id="plannedEnd" type="time" value="20:00"><span>終了予定</span></label></div><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
 <div id="empty" class="empty">グループIDを確認して「SPIXDから読み込む」を押してください。</div>
 <section id="dash" hidden>
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
@@ -64,6 +64,7 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 <div class="card"><div class="label">30分平均</div><div class="value"><span id="pace">—</span><span class="unit"> 組/時</span></div></div>
 <div class="card"><div class="label">高負荷継続</div><div class="value"><span id="highDuration">—</span><span class="unit"> 分</span></div></div>
 <div class="card"><div class="label">平均撮影間隔</div><div class="value"><span id="interval">—</span><span class="unit"> 秒</span></div></div>
+<div class="card"><div class="label">予定開始</div><div class="value" id="plannedStartView">—</div></div>
 <div class="card"><div class="label">予定終了</div><div class="value" id="plannedEndView">—</div></div>
 <div class="card"><div class="label">終了時予測</div><div class="value"><span id="forecast">—</span><span class="unit"> 組</span></div></div>
 <div class="card"><div class="label">残り時間</div><div class="value" id="remaining">—</div></div>
@@ -146,6 +147,7 @@ function startAutoRefresh(){
 }
 $("loadSpixd").textContent="今すぐ更新";
 $("loadSpixd").addEventListener("click",loadSpixd);
+$("plannedStart").addEventListener("change",loadSpixd);
 $("plannedEnd").addEventListener("change",loadSpixd);
 startAutoRefresh();
 function shotsLastTime(text){
@@ -166,7 +168,8 @@ function render(shots,file){
  const dayPace=Math.round(workShots.length/elapsedHours);
  const people=workShots.reduce((sum,x)=>{const n=Number.parseInt(x.name,10);return sum+(Number.isFinite(n)&&n>0?n:1)},0);
  $("people").textContent=people;
- const planned=$("plannedEnd").value;
+ const plannedStart=$("plannedStart").value,planned=$("plannedEnd").value;
+ $("plannedStartView").textContent=plannedStart||"—";
  let forecast="—",remaining="—";
  if(planned){
   const [eh,em]=planned.split(":").map(Number);
