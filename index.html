@@ -48,8 +48,8 @@ h1{margin:0;font-size:32px;letter-spacing:.04em} .sub{color:#777;margin-top:5px}
 </head>
 <body><main>
 <header><div><h1>SPIXD LIVE</h1><div class="sub">撮影ログから、人の流れを見る。</div><div id="liveDate" style="font-size:14px;font-weight:700;margin-top:8px"></div></div>
-<div class="controls"><label class="serverChoice">接続先 <select id="serverMode"><option value="standard">通常SPIXD</option><option value="mynavi">マイナビSPIXD（保存HTMLテスト）</option></select></label><label class="file manualLabel">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html,.xml,text/xml"></label>
-<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><div class="scheduleTimes"><label class="endTime"><input id="plannedStart" type="time" value="16:00"><span>開始予定</span></label><label class="endTime"><input id="plannedEnd" type="time" value="20:00"><span>終了予定</span></label></div><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
+<div class="controls"><label class="serverChoice">接続先 <select id="serverMode"><option value="standard">通常SPIXD</option><option value="mynavi">マイナビSPIXD</option></select></label><label class="file manualLabel">ENTRY LISTを選択 <input id="file" type="file" accept=".html,.htm,text/html,.xml,text/xml"></label>
+<div class="source" style="margin-top:10px"><input id="groupId" value="aathletics2026" placeholder="グループID"><button id="loadSpixd" type="button">SPIXDから読み込む</button><button id="testMynavi" type="button" style="display:none">マイナビ接続テスト</button><div class="scheduleTimes"><label class="endTime"><input id="plannedStart" type="time" value="16:00"><span>開始予定</span></label><label class="endTime"><input id="plannedEnd" type="time" value="20:00"><span>終了予定</span></label></div><small id="connection"><span class="liveBadge">● LIVE</span>　SPIXDに接続して撮影ログを読み込みます。</small></div></div></header>
 <div id="empty" class="empty">グループIDを確認して「SPIXDから読み込む」を押してください。</div>
 <section id="dash" hidden>
 <div class="status"><strong id="statusText">—</strong><small id="statusDetail"></small></div>
@@ -140,7 +140,37 @@ function parseEntryList(text,source){
  return true;
 }
 $("file").addEventListener("change",async e=>{const f=e.target.files[0];if(f)parseEntryList(await f.text(),f.name)});
-function updateServerMode(){const isM=$("serverMode").value==="mynavi";$("loadSpixd").disabled=isM;$("loadSpixd").style.display=isM?"none":"";$("groupId").style.display=isM?"none":"";$("connection").textContent=isM?"マイナビ版：ENTRY LISTのHTMLを保存して選択してください。日付は端末の今日を仮設定します。":"通常SPIXD：10秒ごとに自動更新します。";if(isM){clearInterval(refreshTimer);clearInterval(countdownTimer);}else{startAutoRefresh();}}
+function updateServerMode(){
+ const isM=$("serverMode").value==="mynavi";
+ $("loadSpixd").style.display=isM?"none":"";
+ $("groupId").style.display=isM?"none":"";
+ $("testMynavi").style.display=isM?"":"none";
+ clearInterval(refreshTimer);clearInterval(countdownTimer);
+ $("connection").textContent=isM?"マイナビにログイン済みのブラウザで接続テストできます。保存HTMLの読み込みも利用可能です。":"通常SPIXD：10秒ごとに自動更新します。";
+ if(!isM)startAutoRefresh();
+}
+$("testMynavi").addEventListener("click",async()=>{
+ const status=$("connection");
+ status.textContent="マイナビへ接続テスト中…";
+ try{
+  const response=await fetch("https://job-photo.mynavi.jp/entry/entrylist.html",{credentials:"include",cache:"no-store"});
+  if(!response.ok){status.textContent="HTTP "+response.status+"：マイナビから取得できませんでした。";return}
+  const html=await response.text();
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const rows=[...doc.querySelectorAll("tr")].filter(tr=>{
+   const cells=tr.querySelectorAll("td");
+   return cells.length>=3 && /^\\d+$/.test(cells[0].textContent.trim()) && /^\\d{2}:\\d{2}:\\d{2}$/.test(cells[1].textContent.trim());
+  });
+  if(rows.length){
+   status.textContent="接続成功：撮影ログ "+rows.length+" 件を取得しました。";
+   parseEntryList(html,"マイナビ / 接続テスト");
+  }else{
+   status.textContent="通信は成功しましたが、撮影一覧がありません。ログイン画面が返された可能性があります。";
+  }
+ }catch(error){
+  status.textContent="接続できませんでした（CORS・Cookie・ネットワーク制限の可能性）。保存HTMLでの解析は引き続き利用できます。";
+ }
+});
 $("serverMode").addEventListener("change",updateServerMode);
 let refreshTimer=null,countdownTimer=null,nextRefresh=0,isLoading=false;
 async function loadSpixd(){
@@ -181,8 +211,8 @@ function startAutoRefresh(){
 }
 $("loadSpixd").textContent="今すぐ更新";
 $("loadSpixd").addEventListener("click",loadSpixd);
-$("plannedStart").addEventListener("change",loadSpixd);
-$("plannedEnd").addEventListener("change",loadSpixd);
+$("plannedStart").addEventListener("change",()=>{if($("serverMode").value==="standard")loadSpixd()});
+$("plannedEnd").addEventListener("change",()=>{if($("serverMode").value==="standard")loadSpixd()});
 updateServerMode();
 function shotsLastTime(text){
  const xml=new DOMParser().parseFromString(text,"application/xml");
